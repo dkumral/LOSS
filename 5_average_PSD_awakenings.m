@@ -3,6 +3,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 load('/home/kumral/Desktop/Projects/LOSS_analyses/github_scripts/combined_data.mat');
 
+%%%%%%change/make NaN the participants 9, 4th weckung, since this subject has
+%%%%%%different book
+ind = find(combined_data.VP == 9 & combined_data.Weckung ==4)
+for stg = 1:5
+    combined_data.Pows(ind,1).res{1, stg}   =NaN(size(combined_data.Pows(ind,1).res{1, stg}));  %LOSS_VP15_3
+    combined_data.PSD_avg_epoch{81,stg}  = NaN(size(combined_data.PSD_avg_epoch{81,stg})); %9_4
+end
+
+
 for stg = 1:5
     for subj = 1:20
         clear ind PSD_mean
@@ -32,5 +41,5 @@ for stg = 1:5
 end
 
 data_reduced = struct2table(data_reduced);
-save data_reduced_PSD_cleaned data_reduced
+save data_reduced data_reduced
 %%
