@@ -4,7 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 load('//home/kumral/Desktop/Projects/LOSS_analyses/github_scripts/data_PSD_averaged_slope.mat');
 data = rmfield(data,{'VP','Weckung'});
-folder = '/home/kumral/Desktop/Projects/LOSS_analyses/statistics'; subj = fullfile(folder, '/dream.csv');
+folder = '//home/kumral/Desktop/Projects/LOSS_analyses/github_scripts/scripts_clone/LOSS'; subj = fullfile(folder, '/dream.csv');
 table_behavior = readtable(subj,'PreserveVariableNames',true);
 table_behavior = table_behavior(:,1:7);
 table_behavior = removevars(table_behavior, 'Var1');

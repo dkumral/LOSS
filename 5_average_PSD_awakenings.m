@@ -27,10 +27,10 @@ for stg = 1:5
         data_reduced(subj).PSD_red_org{1, stg} = reshape(PSD_mean_org.',1,[])';
 
         data_reduced(subj).VP = (subj+1);
-        data_reduced(subj).audibook = combined_data.audiobook(ind(end));
+        data_reduced(subj).audiobook = combined_data.audiobook(ind(1));
     end
 end
 
 data_reduced = struct2table(data_reduced);
-save data_reduced_PSD data_reduced
+save data_reduced_PSD_cleaned data_reduced
 %%
