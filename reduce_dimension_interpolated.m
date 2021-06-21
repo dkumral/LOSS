@@ -1,8 +1,6 @@
-function [PSD_W_S_red]  = reduce_dimension(rejC_W, rejC_S, rejE_W, PSD_W_S)
+function [PSD_W_S_red]  = reduce_dimension(PSD_S)
             
-            dataClean2class = PSD_W_S;
-            dataClean2class(find(rejC_W),:,1:length(rejE_W))=NaN;
-            dataClean2class(find(rejC_S),:,length(rejE_W)+1:end)=NaN;
+            dataClean2class = PSD_S;
             DATA_X = NaN(32,size(dataClean2class,2), size(dataClean2class,3));
             
             Gr = 1:32; Ye = 33:64;  Re = 65:96; Wh = 97:128;

@@ -3,13 +3,22 @@
 % script using the fitpowerlaw function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-load('/home/kumral/Desktop/Projects/LOSS_analyses/github_scripts/data_PSD_averaged.mat')
+clear all
+close all
+load('/home/kumral/Desktop/Projects/LOSS_analyses/github_scripts/data_PSD_averaged_interpolated.mat')
 XX = data.F;
+doPlot =1;
+robRegMeth= 'ols';
 %%
 for i = 1:81
     for stg = 1:5
         for ch = 1:32
-            YY = data(i).PSD_avg_epoch{1, stg}(ch,:)';
+            try
+                YY = data(i).PSD_avg_epoch_rej{1, stg}(ch,:)'; %arrange for interpolated channels and rejected epochs
+            catch
+                YY = NaN;
+            end %Added because program crashes when data(i).PSD_avg_epoch{1, stg} is NaN and ch>1
+            
             if any(~isnan(YY), 'all')
                 [intSlo, stat, Pows, Deviants,  stat0, intSlo0] = fitPowerLaw3steps(XX,YY, 'ols');
                 spectralExponent= intSlo(2);
@@ -18,6 +27,12 @@ for i = 1:81
                 data(i).Pows.obs{stg}(ch,:) =   Pows.obs;
                 data(i).Pows.frex{stg}(ch,:) =    Pows.frex;
                 data(i).spectralExponent{stg}(ch) = spectralExponent;
+                N = Pows.frex; 
+                V =  0.5:0.5:45;
+                ind = interp1(N,1:length(N),V,'nearest');
+                Pows.res_red = data(i).Pows.res{1, stg}(ch,ind);
+                data(i).Pows.res_red{stg}(ch,:) =  Pows.res_red;
+
             else
                 disp('data is a nan')
                 data(i).Pows.pred{stg}(ch,:) = NaN(1,360);
@@ -25,9 +40,13 @@ for i = 1:81
                 data(i).Pows.res{stg}(ch,:) = NaN(1,360);
                 data(i).Pows.frex{stg}(ch,:) =   NaN(1,360);
                 data(i).spectralExponent{stg}(ch) = NaN;
+                data(i).Pows.res_red{stg}(ch,:) =  NaN(1,90);
+
             end
         end
     end
+
 end
-save('data_PSD_averaged_slope.mat', 'data', '-v7.3')
+
+save('data_PSD_averaged_slope_interpolated.mat', 'data', '-v7.3')
 %%
