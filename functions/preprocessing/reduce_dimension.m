@@ -1,3 +1,5 @@
+%%%%%%%%%%%%%%function is for reducing the EEG channel dimension 128 to 32%%%%%%%%%%%%%
+
 function [PSD_W_S_red]  = reduce_dimension(PSD_S)
             
             dataClean2class = PSD_S;

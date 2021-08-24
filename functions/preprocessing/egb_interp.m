@@ -1,3 +1,5 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%this function is for the interpolation of the channels%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function data = egb_interp(data, chanlocs, goodchans, method)
 
 if nargin<4
@@ -48,8 +50,4 @@ elseif strcmp(method,'cubic')
 else
     error('Unknown method for interpolation.');
 end
-
-
-
-    
-    
+%%     

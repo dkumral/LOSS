@@ -1,10 +1,13 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%this function is based on PSD averaging: one leave out: equal amounth of
-%%between vs within group
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [p, observeddifference_ztrans]  = permutation(PSD,nperm, sz, VP, audiobook, stat,stage)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%this function is based on PSD averaging one leave out: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Equal values (in terms of within vs between) equal 1 for within 1 values for btw%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [p, observeddifference_ztrans]  = permutation_leave_one_out1between_1within(PSD,nperm, sz, VP, audiobook, stat,stage)
 %this is for the observed differences
 close all
+rng(123, 'twister')
+
 for stg = stage
     within = []; between =[]; PSD_within=[]; PSD_between =[];
     for a =1:4
@@ -17,15 +20,15 @@ for stg = stage
             Aleft= PSD_within{l, 1} ; %leave one audiobook alone (one leave out)
             PSD_within{l, 1}  = nan(size(Aleft)); %delete that audiobook in the within book dim
             within_rest = nanmean([(PSD_within{:})],2); %take the mean of rest within audiobook
-            within(l,a) = corr(Aleft, within_rest, 'Type','Spearman'); %correlation of within audiobook: one leave out and SNR increased averaged rest
-            between(l,a) = corr(Aleft, btw_rest,'Type','Spearman'); % correlation of left alone and between all audiobooks
+            within(l,a) = atanh(corr(Aleft, within_rest, 'Type','Spearman')); %correlation of within audiobook: one leave out and SNR increased averaged rest
+            between(l,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman')); % correlation of left alone and between all audiobooks
         end
     end
     within(within==0) = NaN;
     between(between==0) = NaN;
     
-    within_corr_books = atanh(rmmissing(within(:)));
-    between_corr_books = atanh(rmmissing(between(:)));
+    within_corr_books = rmmissing(within(:));
+    between_corr_books = rmmissing(between(:));
     observeddifference_ztrans(stg) = nanmean(within_corr_books)-nanmean(between_corr_books);
     clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest
 end
@@ -33,7 +36,7 @@ end
 %% this is for the permutation (shuffle)
 % for ix = 1:nperm
 %     VPx(:,ix) = VP(randperm(sz,sz)); %generate the random individuals = audiobook is constant
-%     
+%
 % % end
 
 VPx =  VP(cell2mat(arrayfun(@(dummy) randperm(sz), 1:nperm, 'UniformOutput', false)')');
@@ -47,7 +50,7 @@ for stg = stage
 end
 
 
-%% compute the differences in the randomization
+%% compute the random differences
 clear ix within between PSD_within PSD_between within_rest between_corr_books within_corr_books randomdifferences_ztrans
 for stg = stage
     for ix = 1:nperm
@@ -55,24 +58,23 @@ for stg = stage
         for a =1:4
             PSD_within = PSD_perm(audiobook==a,ix,stg); %audiobook is constant
             PSD_btw = PSD_perm(audiobook~=a,ix,stg);
-            btw_rest = nanmean([(PSD_btw{:})],2);
+            btw_rest = nanmean([(PSD_btw{:})],2); % take the nanmean of the PSD (for the rest of audibook)
             for l = 1:length(PSD_within)
                 PSD_within = PSD_perm(audiobook==a,ix,stg);
                 Aleft= PSD_within{l, 1} ;
                 PSD_within{l, 1}  = nan(size(Aleft));
                 within_rest = nanmean([(PSD_within{:})],2);
-                within(l,a) = corr(Aleft, within_rest, 'Type','Spearman'); %correlation of within audiobook: one leave out and SNR increased averaged rest
-                between(l,a) = corr(Aleft, btw_rest,'Type','Spearman'); % correlation of left alone and between all audiobooks
+                within(l,a) = atanh(corr(Aleft, within_rest, 'Type','Spearman')); %correlation of within audiobook: one leave out and SNR increased averaged rest
+                between(l,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman')); % correlation of left alone and between all audiobooks
                 within(within==0) = NaN;
                 between(between==0) = NaN;
             end
         end
-        within_corr_books = atanh(rmmissing(within(:)));
-        between_corr_books = atanh(rmmissing(between(:)));
-        randomdifferences_ztrans(ix,stg) = [nanmean(within_corr_books,1)-nanmean(between_corr_books,1)]';
-
+        within_corr_books = rmmissing(within(:)); %the size of within correlation should be equal to sz
+        between_corr_books = rmmissing(between(:)); %the size of btw correlation should be equal to sz
+        randomdifferences_ztrans(ix,stg) = [nanmean(within_corr_books)-nanmean(between_corr_books)]';
     end
-      clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest
+    clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest
 end
 
 
@@ -92,7 +94,7 @@ for stg =stage
     elseif strcmp(stat, 'larger')
         p(stg) = (length(find(randomdifferences_ztrans(:, stg) > observeddifference_ztrans(stg)))+1) / (nperm+1);
     end
-
+    
     % plotting result
     nexttile()
     histogram(randomdifferences_ztrans(:, stg), 20, 'facecolor','#9ebcda', 'EdgeColor', '#9ebcda', 'facealpha', 0.5,  'LineStyle', 'none' );
@@ -103,7 +105,8 @@ for stg =stage
     od = plot(observeddifference_ztrans(stg), 0, '*', 'MarkerSize',8,'MarkerEdgeColor','#8856a7', 'DisplayName', sprintf('p = %.3f',p(stg) ));
     xline(observeddifference_ztrans(stg), 'LineWidth', 2, 'color', '#8856a7');
     legend(od);
-    legend boxoff 
+    legend boxoff
 end
 saveas(t, 'permutation_PSD_averaging_1-1.jpeg')
-%%%%% %%%%% %%%%%  %%%%%  %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -84,5 +84,21 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%visualize the number of epochs for each cycle%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+F= 1:0.5:40;
+for subj=1:19
+    close all
+    t = tiledlayout(1, 5);
+    set(gcf, 'PaperUnits', 'inches');
+    x_width=28 ;y_width=7;
+    set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
+    dir = strcat(string(data_reduced.VP(subj)),'_averaged_PSD');
+    for stg = 1:5
+        nexttile()
+        for n = 1:32
+            command = [ 'disp(''x ' num2str(n) ''')' ];
+            hold on
+                plot(F, data_reduced.PSD{subj, stg}(n,:))
+        end
+        saveas(t, fullfile(dir), 'jpeg')
+    end
+end
