@@ -32,29 +32,27 @@ function s_t_matrix = sharp_tool(matrix, window_length, adjust)
     end
     
     if adjust
-        for i = 1:height(s_t_matrix)
-            chan_len = width(s_t_matrix(i,:)); %power values Hz
-            for j = 1:chan_len            
+        for ch = 1:height(s_t_matrix) %number of channels
+            freq = width(s_t_matrix(ch,:)); %power values Hz
+            for j = 1:freq            
                 if j-half_window < 1
-                    MA = nanmean(matrix(i, 1:(j+half_window)));
-                elseif j+half_window > chan_len
-                    MA = nanmean(matrix(i,(j-half_window):end));
+                    MA = nanmean(matrix(ch, 1:(j+half_window)));
+                elseif j+half_window > freq
+                    MA = nanmean(matrix(ch,(j-half_window):end));
                 else           
-                    MA = nanmean(matrix(i, (j-half_window):(j+half_window)));
+                    MA = nanmean(matrix(ch, (j-half_window):(j+half_window)));
                 end
-                s_t_matrix(i,j) = s_t_matrix(i,j)-MA;        
+                s_t_matrix(ch,j) = s_t_matrix(ch,j)-MA;        
             end
         end
         
     elseif ~adjust                
-        for i = 1:height(s_t_matrix)
-            chan_len = width(s_t_matrix(i,:));
-            for j = half_window+1:chan_len-half_window
-                MA = nanmean(matrix(i, j-half_window:j+half_window));
-                s_t_matrix(i,j) = s_t_matrix(i,j)-MA;
+        for ch = 1:height(s_t_matrix)
+            freq = width(s_t_matrix(ch,:));
+            for j = half_window+1:freq-half_window
+                MA = nanmean(matrix(ch, j-half_window:j+half_window));
+                s_t_matrix(ch,j) = s_t_matrix(ch,j)-MA;
             end
         end
     end
-end
-
-            
+end           

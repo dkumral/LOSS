@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%function is for the implementation of PSD reprocessing%%%%%%%%%%%%%
-function PSD_preprocess(filenameS, filenameSinfo,filenameM, fmin, fmax, logtrans,  interpolate, reject, reduce, sharptool, doplot,vp, cyc, condition,transform)
+function PSD_preprocess(filenameS, filenameSinfo,filenameM, fmin, fmax, logtrans,  interpolate, reject, reduce, sharptool, doplot,vp, cyc, condition,transform,reducetime, timing, min)
 if exist(filenameSinfo, 'file') == 2
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %load(filenameM); %load the PSD
@@ -20,6 +20,29 @@ if exist(filenameSinfo, 'file') == 2
         use_S = filenameS(sleep_ind,1); %used trials/epochs
         Stages_S = filenameS(sleep_ind,3); %used trials/epochs
     end
+    
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if isequal(reducetime,'minutes') %reduce the time before awakening
+       time = min*60; %15 min as interests
+       time = time/4; % as the each trial/epochs is 4 second
+       if length(use_S) < time
+           Stages_S = Stages_S;
+           use_S = use_S;
+       elseif isequal(timing,'last')
+           Stages_S = Stages_S(end-time+1:end);      % last min elements
+           use_S = use_S(end-time+1:end);  % last min elements
+       elseif isequal(timing,'first')
+           Stages_S = Stages_S(1:time);      % last min elements for the wake
+           use_S = use_S(1:time);  % last min elements for the wake
+       else isequal(timing,'random')
+           rng(1234, 'twister')
+           rand = randperm(length(use_S),time); %taking random time intervals
+           use_S = use_S(rand);
+           Stages_S = Stages_S(rand);
+       end
+   end
+
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    %%%%%%%%%%interpolation of channels%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

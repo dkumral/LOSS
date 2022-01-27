@@ -2,77 +2,97 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%this function is based on PSD averaging: one leave out: not equal 1 for within 3 values for btw%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [p, observeddifference_ztrans]  = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, audiobook, stat, stage)
+function [p, observeddifference_ztrans]  = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
 %%this part is for the observed differences%%
 close all
-rng(123, 'twister')
-
+rng(10)
 for stg = stage 
     within = []; between =[]; PSD_within=[]; PSD_between =[]; between_corr_books=[]; %create empty files
-    for a =1:4 %audiobook
-        PSD_within = PSD(audiobook==a,stg); %take the PSDs based on the audiobook (e.g., A1)
+    for a =1:length(unique(parameters)) %parameters
+        PSD_within = PSD(parameters==a,stg); %take the PSDs based on the parameters (e.g., A1)
+        PSD_within_VP = VP(parameters==a); %take the PSDs based on the parameters (e.g., A1)
+
         for l = 1:length(PSD_within) %leave one out based on the lenght of within PSD
-            PSD_within = PSD(audiobook==a,stg);
+            PSD_within = PSD(parameters==a,stg);
             Aleft= PSD_within{l, 1} ;
+            Aleft_VP(l,a)= PSD_within_VP(l) ;
             PSD_within{l, 1}  = nan(size(Aleft));  %make the PSD NAN
             within_rest = nanmean([(PSD_within{:})],2); % take average of the rest PSDs
             within(l,a) = atanh(corr(Aleft, within_rest, 'Type','Spearman')); %spearman correlation btw Aleft and the rest and fishertoztransformation
             within(within==0) = NaN; %make zeros to NaN
-            
-            other_audio = audiobook(audiobook~=a); %other audiobooks
+            Aleft_VP(Aleft_VP==0) = NaN; %make zeros to NaN for VP
+             
+            other_audio = parameters(parameters~=a); %other parameterss
             ia = unique(other_audio); 
             for iax = 1:length(ia) 
-                PSD_btw = PSD(audiobook==ia(iax),stg); %PSD of other audiobooks for between correlation
+                PSD_btw = PSD(parameters==ia(iax),stg); %PSD of other parameterss for between correlation
                 btw_rest = nanmean([(PSD_btw{:})],2);  %take the nanmean of the PSDs
-                between(l,iax,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman')); %correlate the Aleft with the between averaged PSDs for each audiobook
+                between(l,iax,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman')); %correlate the Aleft with the between averaged PSDs for each parameters
                 between(between==0) = NaN; %make zeros to NaN
                 clear PSD_btw btw_rest
             end
         end
     end
+    within_order_VP = rmmissing(Aleft_VP(:));
     within_corr_books = rmmissing(within(:));  %the size of within correlation should be equal to sz
     between_corr_books = rmmissing(between(:)); % the size of btw correlation should be equal to sz*3
     observeddifference_ztrans(stg) = nanmean(within_corr_books)-nanmean(between_corr_books);
-    clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest
+    save within_corr_books within_corr_books
+    save within_order_VP within_order_VP
+    save between_corr_books between_corr_books
+    clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest 
 end
+clear ix within between PSD_within PSD_between within_rest between_corr_books within_corr_books Aleft_VP PSD_within_VP
 
 %% this is for the permutation (shuffle)
-%     for ix = 1:nperm
-%         VPx(:,ix) = VP(randperm(sz,sz));
-%     end
-%
-VPx =  VP(cell2mat(arrayfun(@(dummy) randperm(sz), 1:nperm, 'UniformOutput', false)')'); %permute the data
-
-for stg = stage
-    for i=1:sz
+if isequal(searchlight,'freq') %this is for the searchlight analyses
+    PSD_perm = searchlight_PSD(VP,sz,nperm,frangeAll,stage,PSD,ifreq);
+elseif isequal(searchlight,'channel') %this is for the searchlight analyses
+    PSD_perm = searchlight_ROI(VP,sz,nperm,stage,PSD,ROI,r);
+else %else means no searchight, here we use permutation based on individual levels
+    for stg = stage
         for ix = 1:nperm
-            PSD_perm(i,ix,stg) = PSD(find(VP  == VPx(i,ix)),stg); %arrange the PSDs based ont he permuted data
+            if sz>19
+                VP2 = unique(VP);
+                VPx =  VP2(cell2mat(arrayfun(@(dummy) randperm(length(VP2)), 1:nperm, 'UniformOutput', false)')'); %permute the data
+                PSD3 = [];
+                for i=1:length(VP2)
+                    PSD_x = PSD(find(VP  == VPx(i,ix)),stg); %arrange the PSDs based ont he permuted data
+                    PSD3 = vertcat(PSD3, PSD_x); % combine all CH1 for all awakenings
+                end
+                PSD_perm(:,ix,stg) = PSD3;
+                PSD3 = [];
+            else
+                VPx =  VP(cell2mat(arrayfun(@(dummy) randperm(sz), 1:nperm, 'UniformOutput', false)')'); %permute the data
+                for i=1:sz
+                    PSD_perm(i,ix,stg) = PSD(find(VP  == VPx(i,ix)),stg); %arrange the PSDs based ont he permuted data
+                end
+            end
         end
     end
 end
-clear ix within between PSD_within PSD_between within_rest between_corr_books within_corr_books
 %% compute the differences in the randomization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%compute the random differences %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%this loop is basically same above, but uses permuted PSD matrix by taking audiobook as constant%%%%%%%%%%%%%%%%%%%
+%this loop is basically same above, but uses permuted PSD matrix by taking parameters as constant%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for stg = stage
     for ix = 1:nperm
         within = []; between =[]; PSD_within=[]; PSD_between =[]; between_corr_books=[];
-        for a =1:4
-            PSD_within = PSD_perm(audiobook==a,ix,stg);
+        for a =1:length(unique(parameters))
+            PSD_within = PSD_perm(parameters==a,ix,stg);
             for l = 1:length(PSD_within)
-                PSD_within = PSD_perm(audiobook==a,ix,stg);
+                PSD_within = PSD_perm(parameters==a,ix,stg);
                 Aleft= PSD_within{l, 1} ;
                 PSD_within{l, 1}  = nan(size(Aleft));
                 within_rest = nanmean([(PSD_within{:})],2);
                 within(l,a) = atanh(corr(Aleft, within_rest, 'Type','Spearman'));
                 within(within==0) = NaN;
                 
-                other_audio = audiobook(audiobook~=a);
+                other_audio = parameters(parameters~=a);
                 ia = unique(other_audio);
                 for iax = 1:length(ia)
-                    PSD_btw = PSD_perm(audiobook==ia(iax),ix,stg);
+                    PSD_btw = PSD_perm(parameters==ia(iax),ix,stg);
                     btw_rest = nanmean([(PSD_btw{:})],2);
                     between(l,iax,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman'));
                     between(between==0) = NaN;
@@ -103,19 +123,10 @@ for stg =stage
     elseif strcmp(stat, 'larger')
         p(stg) = (length(find(randomdifferences_ztrans(:, stg) > observeddifference_ztrans(stg)))+1) / (nperm+1);
     end
-    
-    % plotting result
-    nexttile()
-    histogram(randomdifferences_ztrans(:, stg), 20, 'facecolor','#9ebcda', 'EdgeColor', '#9ebcda', 'facealpha', 0.5,  'LineStyle', 'none' );
-    box off
-    hold on;
-    xlabel('Random Difference (z-transformed)');
-    ylabel('Frequency')
-    od = plot(observeddifference_ztrans(stg), 0, '*', 'MarkerSize',8,'MarkerEdgeColor','#8856a7', 'DisplayName', sprintf('p = %.3f',p(stg) ));
-    xline(observeddifference_ztrans(stg), 'LineWidth', 2, 'color', '#8856a7');
-    legend(od);
-    legend boxoff
+   plot_permutation(randomdifferences_ztrans, observeddifference_ztrans, stg,p)
 end
-saveas(t, 'permutation_PSD_averaging_1-3.jpeg')
+clear PSD_perm
+saveas(t, 'permutation_PSD_averaging_1-3_REM.jpeg')
+save stats_averaging_1-3 p randomdifferences_ztrans observeddifference_ztrans
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

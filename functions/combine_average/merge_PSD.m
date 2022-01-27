@@ -14,8 +14,8 @@ for i = 1:length(fullfiles)
     data(i).Weckung = strtok(flname(8:9), "_");
     data(i).PSD_S_avg = PSD_S_avg;
     data(i).dim_PSD_total = dim_PSD_total'; %dimension total
-    data(i).dim_PSD_wake = dim_PSD'; %dimension of PSDwake
-    data(i).dim_PSD_sleep = dim_PSD_total- dim_PSD;  %dimension of PSD sleep
+    data(i).dim_PSD_sleep = dim_PSD'; %dimension of PSDwake
+    data(i).dim_PSD_other = dim_PSD_total- dim_PSD;  %dimension of PSD sleep
     data(i).F = F;
 
 end

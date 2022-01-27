@@ -3,14 +3,14 @@
 %%this function is based on PSD averaging one leave out: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%Equal values (in terms of within vs between) equal 1 for within 1 values for btw%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [p, observeddifference_ztrans]  = permutation_leave_one_out1between_1within(PSD,nperm, sz, VP, audiobook, stat,stage)
+function [p, observeddifference_ztrans]  = permutation_leave_one_out1between_1within(PSD,nperm, sz, VP, audiobook, stat,stage,Weckung)
 %this is for the observed differences
 close all
-rng(123, 'twister')
+rng(1234, 'twister')
 
 for stg = stage
     within = []; between =[]; PSD_within=[]; PSD_between =[];
-    for a =1:4
+    for a =1:length(unique(audiobook))
         PSD_within = PSD(audiobook==a,stg); %take the audiobook
         PSD_btw = PSD(audiobook~=a,stg);%take the rest of the audiobook
         btw_rest = nanmean([(PSD_btw{:})],2);%take mean of rest of the audiobook across 2nd dimension
@@ -39,23 +39,37 @@ end
 %
 % % end
 
-VPx =  VP(cell2mat(arrayfun(@(dummy) randperm(sz), 1:nperm, 'UniformOutput', false)')');
-
-for stg = stage
-    for i=1:sz
-        for ix = 1:nperm
-            PSD_perm(i,ix,stg) = PSD(find(VP  == VPx(i,ix)),stg);
+if sz>19
+    VP2 = unique(VP);
+    VPx =  VP2(cell2mat(arrayfun(@(dummy) randperm(length(VP2)), 1:nperm, 'UniformOutput', false)')'); %permute the data
+    PSD3 = [];
+    for ix = 1:nperm
+        for stg = stage
+            for i=1:length(VP2)
+                PSD_x = PSD(find(VP  == VPx(i,ix)),stg); %arrange the PSDs based ont he permuted data
+                PSD3 = vertcat(PSD3, PSD_x); % combine all CH1 for all awakenings
+            end
+            PSD_perm(1:sz,ix,stg) = PSD3;
+            PSD3 = [];
         end
     end
-end
-
+else
+    VPx =  VP(cell2mat(arrayfun(@(dummy) randperm(sz), 1:nperm, 'UniformOutput', false)')'); %permute the data
+    for stg = stage
+        for i=1:sz
+            for ix = 1:nperm
+                PSD_perm(i,ix,stg) = PSD(find(VP  == VPx(i,ix)),stg); %arrange the PSDs based ont he permuted data
+            end
+        end
+    end
+end  
 
 %% compute the random differences
 clear ix within between PSD_within PSD_between within_rest between_corr_books within_corr_books randomdifferences_ztrans
 for stg = stage
     for ix = 1:nperm
         within = []; between =[]; PSD_between=[]; PSD_within =[];
-        for a =1:4
+        for a =1:length(unique(audiobook))
             PSD_within = PSD_perm(audiobook==a,ix,stg); %audiobook is constant
             PSD_btw = PSD_perm(audiobook~=a,ix,stg);
             btw_rest = nanmean([(PSD_btw{:})],2); % take the nanmean of the PSD (for the rest of audibook)
@@ -107,6 +121,8 @@ for stg =stage
     legend(od);
     legend boxoff
 end
-saveas(t, 'permutation_PSD_averaging_1-1.jpeg')
+saveas(t, 'permutation_PSD_averaging_1-1_NONREM.jpeg')
+save stats_averaging_1-1 p randomdifferences_ztrans observeddifference_ztrans
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

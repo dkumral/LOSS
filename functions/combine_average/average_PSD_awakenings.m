@@ -1,11 +1,11 @@
 function data_reduced = average_PSD_awakenings(combined_data, stage, subjects)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%averaging across awakenings: PSD (residual), audiobooks
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%averaging across awakenings: PSD (residual)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ind = find(combined_data.VP == 9 & combined_data.Weckung ==4); %%change/make NaN the participants 9, 4th weckung, since this subject has different book%%%%%%%%%%%%%%%%%%%%%%%%
 for stg = stage
-    combined_data.PSD_S_avg{ind,1}   =NaN(size(combined_data.PSD_S_avg{ind,1}));
+    combined_data.PSD_S_avg{ind,1} =NaN(size(combined_data.PSD_S_avg{ind,1}));
 end
 
 for stg = stage
@@ -24,6 +24,8 @@ for stg = stage
         data_reduced(subj).PSD_res_red{1, stg} = reshape(PSD_mean.',1,[])';
         data_reduced(subj).VP = (subj);
         data_reduced(subj).audiobook = combined_data.audiobook(ind(1));
+        data_reduced(subj).dream = combined_data.dream(ind(1));
+
     end
 end
 data_reduced(1:2) = []

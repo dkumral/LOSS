@@ -26,51 +26,92 @@ save sum_epoch_across_stg sum_epoch_across_stg
 save mean_epoch_across_stg mean_epoch_across_stg
 %%
 %%parameters of interests for pwelch%%
+clear all
+rng(555, 'twister')
 Fs= 1000; %sampling rate
 timeS= 4; %second
 dataPoints= 1: Fs*timeS; %number of data points
 nchan=32; %number of channels
-Fs = 1000;
 fftwindow = Fs*2;
 noverlap = Fs*1.9;
 nfft = Fs*2;
-condition = 'max' % change it accordingly, as sum, mean, max, min
+minspind = 11;
+maxspind = 16;
+f = minspind + (maxspind-minspind).*rand(48,1);
+fmin = 0.5;
+fmax = 45;
+F= 0:0.5:99.5'; %F
+sharptool=0;
+Freq = F(F>=fmin & F<=fmax);
+epochs = 1%:1500;
+%h = 0.08 + (0.13-0.08).*rand(19,1);
+h = 0.05 + (0.10-0.05).*rand(48,1);
+h = h*-1;
 %%
-%the pink noise based on the epochs above and smooth it and take the pwelch
-%run based on the real epoch number
-load('sum_epoch_across_stg.mat')
-load('mean_epoch_across_stg.mat')
-
-for stg = 1:5
-    for ind = 1:19
-        if isequal(condition,'sum')
-            epoch = sum_epoch_across_stg(ind,stg);
-        elseif isequal(condition,'min')
-            minepochs = min(sum_epoch_across_stg);
-            epoch = minepochs(stg);
-        elseif isequal(condition,'mean')
-            mean_epoch = nanmean(mean_epoch_across_stg)
-            epoch = mean_epoch(stg);
-        else 
-            maxepochs = max(sum_epoch_across_stg)
-            epoch = maxepochs(stg);
+for i = 20:48
+    for n= epochs
+        for ch = 1:nchan
+            seed = randperm(9999999, 1); % you may generate new seeds
+            rng(seed, 'twister')
+            pink= pinknoise(dataPoints(end),1);     %myEEGch=  randn(1,dataPoints(end));
+            %pink_chan(:, ch)= smooth(pink, Fs)';            
+            x = h(i)*cos(2*pi*f(i)*dataPoints/Fs);
+            x = x(:);
+            pink_chan_epoch(ch,:,n) = pink+x;
+            PSD(ch,:,n) = pwelch(pink_chan_epoch(ch,:,n),fftwindow,noverlap,nfft,Fs);
         end
-        for n= 1:epoch
-            for ch = 1:nchan
-                seed = randperm(9999999, 1); % you may generate new seeds
-                rng(seed, 'twister')
-                pink= pinknoise(dataPoints(end),1);     %myEEGch=  randn(1,dataPoints(end));
-                %pink_chan(:, ch)= smooth(pink, Fs)';
-                pink_chan_epoch(:,ch,n) = pink;
-                PSD(:,ch,n) = pwelch(pink_chan_epoch(:,ch,n),fftwindow,noverlap,nfft,Fs);
-            end
-        end
-        pink_noise(ind,stg).PSD(:,:,:) = PSD;
-        PSD_avg = nanmean(pink_noise(ind,stg).PSD,3);
     end
-    pink_noise(ind,stg).PSD_avg_epochs(:,:) = PSD_avg;
-    clear pink_chan_epoch pink_chan pink PSD_avg psd  PSD
+    
+    PSD_S = PSD(:,F>=fmin & F<=fmax,epochs); % taking only <nmax Hz %%%
+    PSD_S = log10(PSD_S); % log transformation of PSD
+    PSD_S_avg = nanmean(PSD_S,3); %mean in 3rd dimension: epochs
+    PSD_S_avg = eegcha_normalize0_1(PSD_S_avg); %normalize between 1 and 0
+   
+    PSD_S_avg_shap= sharp_tool(PSD_S_avg,6);
+
+    for ch = 1:size(PSD_S_avg,1)
+        command = [ 'disp(''x ' num2str(ch) ''')' ];
+        hold on
+        plot(Freq,  PSD_S_avg(ch,:));
+    end
+    
+    saveas(gcf, sprintf('VP%d_PSD_simulate',i), 'jpeg');
+    close all
+    data_reduced(i).PSD_res_red{1, 1} = reshape(PSD_S_avg.',1,[])';
+    data_reduced(i).PSD_S_avg{1, 1} = PSD_S_avg;
+    data_reduced(i).PSD_S_avg_sharp = reshape(PSD_S_avg_shap.',1,[])';
+
 end
-save pink_noise_max pink_noise
+save data_reduced_all data_reduced
 %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+load('data_reduced.mat')
+VP = data_reduced.VP;
+audiobook = data_reduced.audiobook;
+clear data_reduced
+% 
+load('data_reduced.mat')
+data_reduced = struct2table(data_reduced);
+data_reduced.VP = VP;
+data_reduced.audiobook = audiobook;
+% 
+save data_reduced data_reduced
+%%
+data_reduced=table2struct(data_reduced)
+
+for i = 1:19
+    PSD_ind = data_reduced(i).PSD_S_avg ;
+    
+    PSD_S_avg= sharp_tool(PSD_ind,6);
+    for ch = 1:size(PSD_S_avg,1)
+        command = [ 'disp(''x ' num2str(ch) ''')' ];
+        hold on
+        plot(Freq,  PSD_S_avg(ch,:));
+    end
+    saveas(gcf, sprintf('VP%d_PSD_simulate',i), 'jpeg');
+    close all
+    data_reduced(i).PSD_S_avg_sharp = reshape(PSD_S_avg.',1,[])';
+end
+data_reduced = struct2table(data_reduced);
+save data_reduced data_reduced
+%%
