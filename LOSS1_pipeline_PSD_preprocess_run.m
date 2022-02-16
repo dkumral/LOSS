@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%preprocessing%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%parameters of preprocessing
 %% 
-clear all
+%clear all
 cd /home/kumral/Desktop/Projects/LOSS_analyses/audiobook_PSDs/ 
 load('sleep_info_audiobook.mat') %%one EEG file including all individual PSD info (epoch, stages etc...)
 addpath('/home/kumral/Desktop/Projects/LOSS/EEG_raw/') %directory for raw EEG files for 'rejection' info
@@ -11,18 +11,19 @@ logtrans =1; %do log transform, (0=no,1=yes)
 doplot = 1; %do plotting of PSD (0=no,1=yes)
 reject = 0; %reject the noisy epochs (0=no,1=yes)
 reduce = 0; %reduce the channels to 32 (0=no,1=yes)
-interpolate =  0; %interpolate the channels (0=no,1=yes)
+interpolate =1; %interpolate the channels (0=no,1=yes)
 sharptool = 1; %sharpening toolbox (0=no,1=yes)
 condition = 'sleep'; %sleep or %wake
 transform = 'norm'; %normalize or %rescale function of matlab
 reducetime = 'minutes'; % full or %minutes
-timing = 'last'; %last %first or %random
-min = 15;
+timing = 'last'; %last %first or %random of the data acquisition (last means before awakening)
+min = 16.666; %(%250 epochs)
 saveDir = [timing,'_',condition,'_',num2str(min),'min_fmax',num2str(fmax),'_fmin',num2str(fmin),'_log',num2str(logtrans),'_reject',num2str(reject),'_reduce', num2str(reduce), '_interpolate', num2str(interpolate),transform, '_sharptool', num2str(sharptool)];
 mkdir(saveDir)
 cd(saveDir)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:size(sleep_info_audiobook,1)
+    uses = sleep_info_audiobook.Stages_use_S{i,1};
     filenameM = sleep_info_audiobook.original{i,1};
     filenameS = sleep_info_audiobook.sleep_audiobook_epoch{i,1};
     vp = sleep_info_audiobook.VP(i);
@@ -32,7 +33,7 @@ for i = 1:size(sleep_info_audiobook,1)
     else
         filenameSinfo = sprintf('LOSS_VP%d_%d-rejected-%s.set',vp,cyc, condition);
     end
-    PSD_preprocess(filenameS, filenameSinfo, filenameM, fmin, fmax, logtrans, interpolate, reject, reduce, sharptool, doplot,vp,cyc, condition, transform,reducetime,timing,min)
+    PSD_preprocess(uses,filenameS, filenameSinfo, filenameM, fmin, fmax, logtrans, interpolate, reject, reduce, sharptool, doplot,vp,cyc, condition, transform,reducetime,timing,min)
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%merging the data files%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -43,26 +44,28 @@ data = merge_PSD(fileInfo);
 combined_data = combine_behavioral_table(data);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%averaging across sleep cycles%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+load('data_all_behavior.mat')
 stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
 subjects = unique(combined_data.VP)'; %subjects
 data_reduced = average_PSD_awakenings(combined_data,stage,subjects);
 %final product is data_reduced.mat --> use this file for the statistical
+%analyses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this is for the full matrix  to create also empty files: if 19 subject x 4
 %weckungen, it will create 76 indivduals with some of them are empty
 %it uses combine_data
-load('data_all_behavior.mat')
-stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
-subjects = unique(combined_data.VP)'; %subjects
-Weckung = 1:4;
-data_reduced = average_full_subjects(combined_data,stage,subjects,Weckung);
+%load('data_all_behavior.mat')
+%stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
+%subjects = unique(combined_data.VP)'; %subjects
+%Weckung = 1:4;
+%data_reduced = average_full_subjects(combined_data,stage,subjects,Weckung);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this script is to create the average for nondream and dream condition for
 %each individual subject based on full data that we have
-load('data_reduced_full.mat')
-stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
-subjects = unique(data_reduced.VP)'; %subjects
-data_reduced= average_dream_subjects(data_reduced,stage,subjects);
+%load('data_reduced_full.mat')
+%stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
+%subjects = unique(data_reduced.VP)'; %subjects
+%data_reduced= average_dream_subjects(data_reduced,stage,subjects);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

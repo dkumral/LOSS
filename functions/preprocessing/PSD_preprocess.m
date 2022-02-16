@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%function is for the implementation of PSD reprocessing%%%%%%%%%%%%%
-function PSD_preprocess(filenameS, filenameSinfo,filenameM, fmin, fmax, logtrans,  interpolate, reject, reduce, sharptool, doplot,vp, cyc, condition,transform,reducetime, timing, min)
+function PSD_preprocess(uses,filenameS, filenameSinfo,filenameM, fmin, fmax, logtrans,  interpolate, reject, reduce, sharptool, doplot,vp, cyc, condition,transform,reducetime, timing, min)
 if exist(filenameSinfo, 'file') == 2
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %load(filenameM); %load the PSD
@@ -8,7 +8,8 @@ if exist(filenameSinfo, 'file') == 2
     load(filenameSinfo, '-mat'); %load the sleep info
     rejE_S = EEG.reject.rejglobal; %rejected epochs
     rejC_S = EEG.reject.rejglobalC; %rejected channels
-
+    rej_uses = [rejE_S', uses];
+    
     if isequal(condition,'wake') %wake = audiobook
         audio = find(filenameS(:,end) ==999); %999 %wake = audiobook
         use_S = filenameS(audio,1); %used trials/epochs
@@ -21,31 +22,37 @@ if exist(filenameSinfo, 'file') == 2
         Stages_S = filenameS(sleep_ind,3); %used trials/epochs
     end
     
-   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   if isequal(reducetime,'minutes') %reduce the time before awakening
-       time = min*60; %15 min as interests
-       time = time/4; % as the each trial/epochs is 4 second
-       if length(use_S) < time
-           Stages_S = Stages_S;
-           use_S = use_S;
-       elseif isequal(timing,'last')
-           Stages_S = Stages_S(end-time+1:end);      % last min elements
-           use_S = use_S(end-time+1:end);  % last min elements
-       elseif isequal(timing,'first')
-           Stages_S = Stages_S(1:time);      % last min elements for the wake
-           use_S = use_S(1:time);  % last min elements for the wake
-       else isequal(timing,'random')
-           rng(1234, 'twister')
-           rand = randperm(length(use_S),time); %taking random time intervals
-           use_S = use_S(rand);
-           Stages_S = Stages_S(rand);
-       end
-   end
-
-   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   %%%%%%%%%%interpolation of channels%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if isequal(reducetime,'minutes') %reduce the time before awakening
+        time = min*60; %15 min as interests
+        time = round(time/4); % as the each trial/epochs is 4 second
+        if length(use_S) < time
+            Stages_S = Stages_S;
+            use_S = use_S;
+        elseif isequal(timing,'last')
+            Stages_S = Stages_S(end-time+1:end);      % last min elements
+            use_S = use_S(end-time+1:end);  % last min elements
+        elseif isequal(timing,'first')
+            Stages_S = Stages_S(1:time);      % last min elements for the wake
+            use_S = use_S(1:time);  % last min elements for the wake
+        else isequal(timing,'random')
+            rng(1234, 'twister')
+            rand = randperm(length(use_S),time); %taking random time intervals
+            use_S = use_S(rand);
+            Stages_S = Stages_S(rand);
+        end
+    else isequal(reducetime,'full')
+        Stages_S = Stages_S;
+        use_S = use_S;
+    end
+    
+    %get the indices for the rejected epochs in last 250 epochs
+    [ia,ind]=ismember(use_S,rej_uses(:,end));
+    rej_info = rej_uses(ind,:);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%interpolation of channels%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     dim_PSD_S=size(PSD);
     if interpolate==1       %%%interpolation,
         PSD = reshape(PSD,[dim_PSD_S(1),dim_PSD_S(2)*dim_PSD_S(3)]);
@@ -57,7 +64,8 @@ if exist(filenameSinfo, 'file') == 2
     PSD_S = PSD(:,F>=fmin & F<=fmax,:); % taking only <nmax Hz %%%
     F = F(F>=fmin & F<=fmax);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%averaging across sleep stages%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%averaging across sleep
+    %%%%%%%%%%%%%%%stages%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     dim_PSD_total = size(PSD_S,3); %dimension (how many epochs in total in overall PSD)
     PSD_S = PSD_S(:,:,use_S); %use the sleep or wake data data;
     dim_PSD = size(PSD_S,3); % info about the dimension (wake or sleep)
@@ -68,7 +76,7 @@ if exist(filenameSinfo, 'file') == 2
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%reject bad epochs%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if reject==1       %%%reject "bad" epochs,
-        PSD_S(:,:,find(rejE_S==1))=NaN; %rejected data
+        PSD_S(:,:,find(rej_info(:,1)==1))=NaN; %rejected data
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%reduce the channel dimension%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,36 +123,36 @@ if exist(filenameSinfo, 'file') == 2
             PSD_S_avg = PSD_S_avg;
         end
     end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%plot the PSD files with channels%%%%%%%%%%%%%%%%%
-if doplot==1
-    t = tiledlayout(1, 5);
-    x_width=28 ;y_width=7;
-    set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
-    set(gcf, 'PaperUnits', 'inches');set(gcf, 'PaperUnits', 'inches');
-    if isequal(condition,'sleep')
-        for stg = 1:5
-            nexttile()
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%plot the PSD files with channels%%%%%%%%%%%%%%%%%
+    if doplot==1
+        t = tiledlayout(1, 5);
+        x_width=28 ;y_width=7;
+        set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
+        set(gcf, 'PaperUnits', 'inches');set(gcf, 'PaperUnits', 'inches');
+        if isequal(condition,'sleep')
+            for stg = 1:5
+                nexttile()
+                for ch = 1:size(PSD_S_avg,1)
+                    command = [ 'disp(''x ' num2str(ch) ''')' ];
+                    hold on
+                    plot(F,  PSD_S_avg(ch,:,stg));
+                end
+            end
+        else
+            x_width=5 ;y_width=5;
+            set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
+            set(gcf, 'PaperUnits', 'inches');set(gcf, 'PaperUnits', 'inches');
             for ch = 1:size(PSD_S_avg,1)
                 command = [ 'disp(''x ' num2str(ch) ''')' ];
                 hold on
-                plot(F,  PSD_S_avg(ch,:,stg));
+                plot(F,  PSD_S_avg(ch,:));
             end
         end
-    else
-        x_width=5 ;y_width=5;
-        set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
-        set(gcf, 'PaperUnits', 'inches');set(gcf, 'PaperUnits', 'inches');
-        for ch = 1:size(PSD_S_avg,1)
-            command = [ 'disp(''x ' num2str(ch) ''')' ];
-            hold on
-            plot(F,  PSD_S_avg(ch,:));
-        end
+        saveas(gcf, sprintf('VP%d_%d_PSD',vp,cyc), 'jpeg');
+        close all
     end
-    saveas(gcf, sprintf('VP%d_%d_PSD',vp,cyc), 'jpeg');
-    close all
-end
-save(sprintf('VP%d_%d_PSD.mat',vp,cyc),'dim_PSD_total','dim_PSD','PSD_S_avg', 'total_stg', 'F');
+    save(sprintf('VP%d_%d_PSD.mat',vp,cyc),'dim_PSD_total','dim_PSD','PSD_S_avg', 'total_stg', 'F');
     display('no data');
 end

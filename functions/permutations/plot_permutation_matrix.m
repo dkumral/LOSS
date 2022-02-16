@@ -17,13 +17,15 @@ nexttile
 [parameters ind] = sortrows(parameters); %sorting basedon parameters
 data = corr([PSD{ind,stg}]);
 matrix = tril(atanh(data)); %z-transform and take the Lower triangular part of matrix
-colormap(brewermap([],'GnBu')); %get current colormap
+colormap(brewermap([],'PuBu')); %get current colormap
 imagesc(matrix);
+xlabel('z-transformed correlation values');
+ylabel('z-transformed correlation values');
 for aud = 1:length(unique(parameters))-1
     x1 = find(parameters==aud);
     loc(aud) = (x1(end) +0.5);
     line([0 loc(aud)], [loc(aud) loc(aud)],'Color', '#A2142F', 'LineWidth',3); % vertical
-    line([loc(aud) loc(aud)],[loc(aud) size(VP,1)],'Color', '#A2142F', 'LineWidth',2); % vertical
+    line([loc(aud) loc(aud)],[loc(aud) size(VP,1)+1],'Color', '#A2142F', 'LineWidth',2); % vertical
 end
 colorbar();
 xticklabels('')

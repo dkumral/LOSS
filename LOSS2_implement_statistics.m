@@ -45,7 +45,7 @@ searchlight = 'no';
 stat = 'larger'; %implement the statistics: within>between
 PSD = data_reduced.PSD_res_red; 
 VP = data_reduced.VP; %Versuch person
-stage = [5]; %number of sleep stages (If it is a wake, change it as 1)
+stage = [1:7]; %number of sleep stages (If it is a wake, change it as 1)
 nperm =1000; %number of permutation
 %%
 %permutation for individual PSD shuffling
@@ -54,7 +54,7 @@ nperm =1000; %number of permutation
 %%
 %search light depending on frequency for the audiobook PSD shuffling
 searchlight = 'freq';
-stage = [2,7]%find(p<0.05);
+stage = 5;
 mkdir searchlight
 cd searchlight
 currentFolder = pwd;
@@ -66,26 +66,7 @@ for ifreq=1:size(frangeAll,1)
     mkdir(fileName)
     cd(fileName)
     [p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq);
-   % [p, observeddifference] = permutation_leave_one_out3between_1within(PSD, nperm, sz, VP, parameters,stat,stage,searchlight,frangeAll,ifreq)
-    cd(currentFolder)
-end 
-%%
-%Analysis for dream labelling
-searchlight = 'no';
-[p, observeddifference] = permutation_RSA_matrix_dream(PSD,nperm,sz, VP, parameters, stat, stage,searchlight)
-%%
-%%%search light depending on frequency for the DREAM PSD labelling
-searchlight = 'yes';
-stage = [2,7]%find(p<0.05);
-mkdir searchlight
-cd searchlight
-currentFolder = pwd;
-frangeAll = [0.5,30;0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30;11,18; 4,7]; %
-for ifreq=1:size(frangeAll,1)
-    fileName = [num2str(frangeAll(ifreq,1)),'_',num2str(frangeAll(ifreq,2))];
-    mkdir(fileName)
-    cd(fileName)
-    [p, observeddifference] = permutation_RSA_matrix_dream(PSD,nperm,sz, VP, parameters, stat, stage,searchlight,frangeAll,ifreq)
+    [p, observeddifference] = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
     cd(currentFolder)
 end 
 %%
@@ -97,31 +78,6 @@ ROI{3} = [1,2,3,4,5,6,7,33,34,35,36,37,38,39,40,65,66,67,68,69,70,71,97,98,99,10
 ROI{4} = [28,29,30,31,32,60,61,62,63,64,92,93,94,95,96,125,126,127,128]; %occpital
 ROI{5} = [12,16,17,22,41,42,45,46,51,55,72,73,80,81,82,83,90,91,109,116]; %temporal
 ROI{6}= [1:128]
-
-%%
-%this part is for the dream
-%for the ROI analyses having full channel PSD is required
-%%this part is roi analyses for the dream shuffle label
-searchlight = 'yes';
-stage = [5];
-frangeAll = [0.5,30;0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30;11,18; 4,7]; %
-ifreq=7 %spindle frequency
-mkdir searchlightboth
-cd searchlightboth
-currentFolder = pwd;
-for r = 1:size(ROI,2)
-    for i = 1:sz
-        for stg = stage
-            channel = PSD{i,stg} ;
-            PSD_2dim = reshape(channel,[60,128]);
-            PSD_ROI{i,stg} = nanmean(PSD_2dim(:,ROI{r}),2);
-        end
-    end
-    mkdir(num2str(r))
-    cd(num2str(r))
-    [p, observeddifference] = permutation_RSA_matrix_dream(PSD_ROI,nperm,sz, VP, parameters, stat, stage,searchlight,frangeAll,ifreq)
-    cd(currentFolder)
-end
 %%
 %this section is only for running searchlight ROI: searchlightROI
 ifreq = [];
@@ -135,9 +91,9 @@ for r = 1:size(ROI,2)
     mkdir(num2str(r))
     cd(num2str(r))
     [p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
+    [p, observeddifference] = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
     cd(currentFolder)
 end 
-
 %%
 %this section is only for running searchlight ROI: searchlightROI
 searchlight = 'both';
@@ -146,8 +102,7 @@ mkdir searchlightboth
 cd searchlightboth
 currentFolder = pwd;
 frangeAll = [4,10;0.5,30;0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30;11,18; 4,7]; %
-
-for ifreq=1%:size(frangeAll,1)
+for ifreq=1:size(frangeAll,1)
     fileName = [num2str(frangeAll(ifreq,1)),'_',num2str(frangeAll(ifreq,2))];
     mkdir(fileName)
     cd(fileName)
@@ -155,7 +110,8 @@ for ifreq=1%:size(frangeAll,1)
         currentFolder2 = pwd;
         mkdir(num2str(r))
         cd(num2str(r))
-        [p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
+        %[p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
+        [p, observeddifference] = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
         cd(currentFolder2)
     end
    cd(currentFolder)
@@ -164,12 +120,12 @@ end
 %%%search light depending on frequency for the audiobook PSD labelling
 searchlight = 'no';
 stage = [5]%find(p<0.05);
-mkdir searchlightfoi
-cd searchlightfoi
+mkdir searchlightfoi_2
+cd searchlightfoi_2
 currentFolder = pwd;
-frangeAll = [0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30; 4,7; 0.5,30; 0.5,30]; %
+frangeAll = [4,8;0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30; 4,7; 0.5,30; 0.5,30]; %
 F=0.5:0.5:30;
-for ifreq=2%1:size(frangeAll,1)
+for ifreq=1%:size(frangeAll,1)
     values = 1:length(PSD{1, stage(1)});
     loc = find(F>=frangeAll(ifreq,1) & F<=frangeAll(ifreq,2));
     for k = 1:length(loc)
@@ -187,7 +143,6 @@ for ifreq=2%1:size(frangeAll,1)
     cd(fileName)
     [p, observeddifference] = permutation_RSA_matrix(PSD_2,nperm,sz, VP, parameters, stat, stage,searchlight)
     [p, observeddifference] = permutation_leave_one_out3between_1within(PSD_2,nperm,sz, VP, parameters, stat, stage,searchlight)
-
     cd(currentFolder)
     clear PSD_2 main_loc2 main_loc
 end
@@ -208,6 +163,7 @@ for r = 1:size(ROI,2)
     mkdir(num2str(r))
     cd(num2str(r))
     [p, observeddifference] = permutation_RSA_matrix(PSD_ROI,nperm,sz, VP, parameters, stat, stage,searchlight)
+    [p, observeddifference] = permutation_leave_one_out3between_1within(PSD_ROI,nperm,sz, VP, parameters, stat, stage,searchlight)
     cd(currentFolder)
     clear PSD_2dim
 end
@@ -216,13 +172,11 @@ searchlight = 'no';
 stage = [5];
 mkdir searchlightboth_FOI_ROI
 cd searchlightboth_FOI_ROI
-
 frangeAll = [0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30; 4,7; 0.5,30; 0.5,30]; %
 %this is for the frequency range
 F=0.5:0.5:30;
-
-for r = 3
-    for ifreq=2%1:size(frangeAll,1)
+for r = 5
+    for ifreq=5%1:size(frangeAll,1)
         loc = find(F>=frangeAll(ifreq,1) & F<=frangeAll(ifreq,2)); %find the frequency range
         for k = 1:length(loc)
             main_loc(k,:) = loc(k):length(F):length(PSD{1, stage(1)});

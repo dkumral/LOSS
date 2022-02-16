@@ -25,6 +25,8 @@ for stg = stage
             other_audio = parameters(parameters~=a); %other parameterss
             ia = unique(other_audio); 
             for iax = 1:length(ia) 
+                PSD_btw_VP{iax} = VP(parameters==ia(iax)); %take the PSDs based on the parameters (e.g., A1)
+                Bleft_VP{a} = cell2mat(PSD_btw_VP(:)); 
                 PSD_btw = PSD(parameters==ia(iax),stg); %PSD of other parameterss for between correlation
                 btw_rest = nanmean([(PSD_btw{:})],2);  %take the nanmean of the PSDs
                 between(l,iax,a) = atanh(corr(Aleft, btw_rest,'Type','Spearman')); %correlate the Aleft with the between averaged PSDs for each parameters
@@ -33,6 +35,7 @@ for stg = stage
             end
         end
     end
+    between_order_VP = cell2mat(Bleft_VP(:)); 
     within_order_VP = rmmissing(Aleft_VP(:));
     within_corr_books = rmmissing(within(:));  %the size of within correlation should be equal to sz
     between_corr_books = rmmissing(between(:)); % the size of btw correlation should be equal to sz*3
@@ -40,6 +43,7 @@ for stg = stage
     save within_corr_books within_corr_books
     save within_order_VP within_order_VP
     save between_corr_books between_corr_books
+    save between_order_VP between_order_VP
     clear  within between  within_corr_books  between_corr_books Aleft PSD_within PSD_between PSD_within within_rest 
 end
 clear ix within between PSD_within PSD_between within_rest between_corr_books within_corr_books Aleft_VP PSD_within_VP
@@ -109,10 +113,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%compute p-value visulation of the permutations results%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-t = tiledlayout(length(stage), 1);
-set(gcf, 'PaperUnits', 'inches');
-x_width=8 ;y_width=5.8*length(stage);
-set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
+
 for stg =stage
     %Phibson 2010 Permutation P-values should never be zero: calculating exact P - NCBI
     % getting probability of finding observed difference from random permutations
@@ -121,12 +122,17 @@ for stg =stage
     elseif strcmp(stat, 'smaller')
         p(stg) = (length(find(randomdifferences_ztrans(:, stg) < observeddifference_ztrans(stg)))+1) / (nperm+1);
     elseif strcmp(stat, 'larger')
-        p(stg) = (length(find(randomdifferences_ztrans(:, stg) > observeddifference_ztrans(stg)))+1) / (nperm+1);
+        p(stg) = (length(find(randomdifferences_ztrans(:, stg) >= observeddifference_ztrans(stg)))) / (nperm+1);
     end
-   plot_permutation(randomdifferences_ztrans, observeddifference_ztrans, stg,p)
+    t = tiledlayout(1, 1);
+    set(gcf, 'PaperUnits', 'inches');
+    x_width=8 ;y_width=5.8;
+    set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
+    plot_permutation(randomdifferences_ztrans, observeddifference_ztrans, stg,p)
+    dir = strcat(string(stg),'_permutation_1-3_leaveour');
+    saveas(t, fullfile(dir), 'jpeg') 
 end
 clear PSD_perm
-saveas(t, 'permutation_PSD_averaging_1-3_REM.jpeg')
 save stats_averaging_1-3 p randomdifferences_ztrans observeddifference_ztrans
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

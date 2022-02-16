@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%the function computes the permutation based on RSA matrix correlation computation%%%%%%%%%%%%%%%%%%%%%%
 %%%it creates RSA matrix and from there it computes observed difference%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%RSA is based on spearman correlation%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%RSA is based on Spearman correlation%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [p, observeddifference_ztrans]  = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
 %%this part is for the observed differences%%
 close all
@@ -80,26 +80,27 @@ clear ix data_btw data_within  matrixdim  rowIdcs matrix within_corr within_corr
 %%%%%%%%%%%%%%%%%%%%%%compute p-value visulation of the permutations results%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-t = tiledlayout(length(stage), 2);
-set(gcf, 'PaperUnits', 'inches');
-x_width=15 ;y_width=5.8*length(stage);
-set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
-
 for stg =stage
     %Phibson 2010 Permutation P-values should never be zero: calculating exact P - NCBI
     % getting probability of finding observed difference from random permutations
     if strcmp(stat, 'both')
-        p(stg) = (length(find(abs(randomdifferences_ztrans(:, stg)) > abs(observeddifference_ztrans(stg))))+1) / (nperm+1);
+        p(stg) = (length(find(abs(randomdifferences_ztrans(:, stg)) > abs(observeddifference_ztrans(stg))))) / (nperm+1);
     elseif strcmp(stat, 'smaller')
-        p(stg) = (length(find(randomdifferences_ztrans(:, stg) < observeddifference_ztrans(stg)))+1) / (nperm+1);
+        p(stg) = (length(find(randomdifferences_ztrans(:, stg) < observeddifference_ztrans(stg)))) / (nperm+1);
     elseif strcmp(stat, 'larger')
-        p(stg) = (length(find(randomdifferences_ztrans(:, stg) > observeddifference_ztrans(stg)))+1) / (nperm+1);
+        p(stg) = (length(find(randomdifferences_ztrans(:, stg) >= observeddifference_ztrans(stg)))) / (nperm+1);
     end
     % plotting result
+    
+    t = tiledlayout(1, 2);
+    set(gcf, 'PaperUnits', 'inches');
+    x_width=15 ;y_width=5.8;
+    set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
     plot_permutation_matrix(randomdifferences_ztrans, observeddifference_ztrans, stg,p,parameters,PSD,VP)
+    dir = strcat(string(stg),'_permutation_correlation_matrix');
+    saveas(t, fullfile(dir), 'jpeg')
 end
 
-saveas(t, 'permutation_correlation_matrix.jpeg')
 save stats_rsa p randomdifferences_ztrans observeddifference_ztrans
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
