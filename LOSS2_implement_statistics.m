@@ -110,7 +110,7 @@ for ifreq=1:size(frangeAll,1)
         currentFolder2 = pwd;
         mkdir(num2str(r))
         cd(num2str(r))
-        %[p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
+        [p, observeddifference] = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
         [p, observeddifference] = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
         cd(currentFolder2)
     end
@@ -175,7 +175,7 @@ cd searchlightboth_FOI_ROI
 frangeAll = [0.5,3.5; 4,7.5 ; 8,10.5;11,15.5; 18,30; 4,7; 0.5,30; 0.5,30]; %
 %this is for the frequency range
 F=0.5:0.5:30;
-for r = 5
+for r = 1:5
     for ifreq=5%1:size(frangeAll,1)
         loc = find(F>=frangeAll(ifreq,1) & F<=frangeAll(ifreq,2)); %find the frequency range
         for k = 1:length(loc)

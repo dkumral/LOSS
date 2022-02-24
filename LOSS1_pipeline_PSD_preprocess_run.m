@@ -8,9 +8,9 @@ addpath('/home/kumral/Desktop/Projects/LOSS/EEG_raw/') %directory for raw EEG fi
 filesDir = '//home/kumral/Desktop/Projects/LOSS_analyses/audiobook_PSDs/'; %directory to sava
 fmin = 0.5; fmax=30;
 logtrans =1; %do log transform, (0=no,1=yes)
-doplot = 1; %do plotting of PSD (0=no,1=yes)
+doplot = 0; %do plotting of PSD (0=no,1=yes)
 reject = 0; %reject the noisy epochs (0=no,1=yes)
-reduce = 0; %reduce the channels to 32 (0=no,1=yes)
+reduce = 1; %reduce the channels to 32 (0=no,1=yes)
 interpolate =1; %interpolate the channels (0=no,1=yes)
 sharptool = 1; %sharpening toolbox (0=no,1=yes)
 condition = 'sleep'; %sleep or %wake
@@ -44,7 +44,7 @@ data = merge_PSD(fileInfo);
 combined_data = combine_behavioral_table(data);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%averaging across sleep cycles%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load('data_all_behavior.mat')
+load('data_all_behavior.mat') %name: combined_data
 stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
 subjects = unique(combined_data.VP)'; %subjects
 data_reduced = average_PSD_awakenings(combined_data,stage,subjects);
@@ -55,11 +55,11 @@ data_reduced = average_PSD_awakenings(combined_data,stage,subjects);
 %this is for the full matrix  to create also empty files: if 19 subject x 4
 %weckungen, it will create 76 indivduals with some of them are empty
 %it uses combine_data
-%load('data_all_behavior.mat')
-%stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
-%subjects = unique(combined_data.VP)'; %subjects
-%Weckung = 1:4;
-%data_reduced = average_full_subjects(combined_data,stage,subjects,Weckung);
+load('data_all_behavior.mat')
+stage= 1:5; %stages to combine (averaging, for wake it is 1, sleep 1:5)
+subjects = unique(combined_data.VP)'; %subjects
+Weckung = 1:4;
+data_reduced = average_full_subjects(combined_data,stage,subjects,Weckung);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this script is to create the average for nondream and dream condition for

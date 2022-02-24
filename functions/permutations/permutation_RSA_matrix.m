@@ -5,7 +5,7 @@
 function [p, observeddifference_ztrans]  = permutation_RSA_matrix(PSD,nperm, sz, VP, parameters, stat, stage,searchlight, ROI,r,frangeAll,ifreq)
 %%this part is for the observed differences%%
 close all
-rng(10)
+rng(999)
 for stg = stage %stages of interests
     matrix = corr([PSD{:,stg}], 'type', 'Spearman'); %compute the correlation betweeen individuals: psdx19
     matrix = tril(atanh(matrix)); %z-transform and take the Lower triangular part of matrix

@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%this script is searchlight for the frequency domain: PSD%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [PSD_perm]  = searchlight_PSD_ROI(VP,sz,nperm,frangeAll,stage,PSD,ifreq,ROI,r)
-rng(10)
+rng(999)
 
 %this is for the frequency range
 F=0.5:0.5:30;

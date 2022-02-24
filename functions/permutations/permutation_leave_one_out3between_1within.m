@@ -53,6 +53,8 @@ if isequal(searchlight,'freq') %this is for the searchlight analyses
     PSD_perm = searchlight_PSD(VP,sz,nperm,frangeAll,stage,PSD,ifreq);
 elseif isequal(searchlight,'channel') %this is for the searchlight analyses
     PSD_perm = searchlight_ROI(VP,sz,nperm,stage,PSD,ROI,r);
+elseif isequal(searchlight,'both') %this is for the searchlight analyses
+    PSD_perm = searchlight_PSD_ROI(VP,sz,nperm,frangeAll,stage,PSD,ifreq,ROI,r); 
 else %else means no searchight, here we use permutation based on individual levels
     for stg = stage
         for ix = 1:nperm
@@ -118,9 +120,9 @@ for stg =stage
     %Phibson 2010 Permutation P-values should never be zero: calculating exact P - NCBI
     % getting probability of finding observed difference from random permutations
     if strcmp(stat, 'both')
-        p(stg) = (length(find(abs(randomdifferences_ztrans(:, stg)) > abs(observeddifference_ztrans(stg))))+1) / (nperm+1);
+        p(stg) = (length(find(abs(randomdifferences_ztrans(:, stg)) > abs(observeddifference_ztrans(stg))))) / (nperm+1);
     elseif strcmp(stat, 'smaller')
-        p(stg) = (length(find(randomdifferences_ztrans(:, stg) < observeddifference_ztrans(stg)))+1) / (nperm+1);
+        p(stg) = (length(find(randomdifferences_ztrans(:, stg) < observeddifference_ztrans(stg)))) / (nperm+1);
     elseif strcmp(stat, 'larger')
         p(stg) = (length(find(randomdifferences_ztrans(:, stg) >= observeddifference_ztrans(stg)))) / (nperm+1);
     end
