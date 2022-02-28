@@ -154,5 +154,6 @@ if exist(filenameSinfo, 'file') == 2
         close all
     end
     save(sprintf('VP%d_%d_PSD.mat',vp,cyc),'dim_PSD_total','dim_PSD','PSD_S_avg', 'total_stg', 'F');
-    display('no data');
+else
+    display(sprintf('no data for %s', filenameSinfo));
 end

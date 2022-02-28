@@ -45,7 +45,7 @@ searchlight = 'no';
 stat = 'larger'; %implement the statistics: within>between
 PSD = data_reduced.PSD_res_red; 
 VP = data_reduced.VP; %Versuch person
-stage = [1:7]; %number of sleep stages (If it is a wake, change it as 1)
+stage = [5]; %number of sleep stages (If it is a wake, change it as 1)
 nperm =1000; %number of permutation
 %%
 %permutation for individual PSD shuffling
