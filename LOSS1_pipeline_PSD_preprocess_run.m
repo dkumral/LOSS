@@ -4,7 +4,7 @@
 %clear all
 cd /home/kumral/Desktop/Projects/LOSS_analyses/audiobook_PSDs/ 
 load('sleep_info_audiobook.mat') %%one EEG file including all individual PSD info (epoch, stages etc...)
-addpath('/home/kumral/Desktop/Projects/LOSS/EEG_raw/') %directory for raw EEG files for 'rejection' info
+addpath('//home/kumral/neurostorage/neuroData/LOSS/EEG_raw/') %directory for raw EEG files for 'rejection' info
 filesDir = '//home/kumral/Desktop/Projects/LOSS_analyses/audiobook_PSDs/'; %directory to sava
 fmin = 0.5; fmax=30;
 logtrans =1; %do log transform, (0=no,1=yes)
