@@ -5,7 +5,7 @@
 function [p, observeddifference_ztrans]  = permutation_leave_one_out3between_1within(PSD,nperm, sz, VP, parameters, stat, stage, searchlight,ROI,r,frangeAll,ifreq)
 %%this part is for the observed differences%%
 close all
-rng(10)
+rng(9)
 for stg = stage 
     within = []; between =[]; PSD_within=[]; PSD_between =[]; between_corr_books=[]; %create empty files
     for a =1:length(unique(parameters)) %parameters
@@ -131,10 +131,10 @@ for stg =stage
     x_width=8 ;y_width=5.8;
     set(gcf, 'PaperPosition', [0 0 x_width y_width]); %
     plot_permutation(randomdifferences_ztrans, observeddifference_ztrans, stg,p)
-    dir = strcat(string(stg),'_permutation_1-3_leaveour');
+    dir = strcat(string(stg),'_permutation_1-3_leaveout');
     saveas(t, fullfile(dir), 'jpeg') 
 end
 clear PSD_perm
-save stats_averaging_1-3 p randomdifferences_ztrans observeddifference_ztrans
+save stats_averaging_1-3_rem p randomdifferences_ztrans observeddifference_ztrans
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

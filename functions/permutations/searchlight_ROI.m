@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%this script is searchlight for the fOI%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [PSD_perm]  = searchlight_ROI(VP,sz,nperm,stage,PSD,ROI,r)
-rng(10)
+rng(999)
 
 F=0.5:0.5:30;
 start = 1:length(F):length(PSD{1,stage(1)});
@@ -11,9 +11,10 @@ ending = length(F):length(F):length(PSD{1, stage(1)});
 values = 1:length(PSD{1, stage(1)});
 
 for s = 1:size(ROI{r},2) %number of channel
-    Chrange(:,s) = [start(ROI{r}(s)):ending(ROI{r}(s))]; %channel range %chnnel for interests
+    Chrange(:,s) = [start(ROI{r}(s)):ending(ROI{r}(s))]; %channel range %channel for interests
 end
-main_loc2 = reshape(Chrange,[],1); %find the main location of that frequency range
+
+main_loc2 = reshape(Chrange,[],1); %find the main location of that range
 loc_nonROI = ~ismember(values', main_loc2); %take other roi of interests
 loc_ROI = ismember(values', main_loc2); %take not other roi
 
